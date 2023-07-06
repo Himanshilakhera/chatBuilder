@@ -86,8 +86,10 @@ function Builder() {
   const [showChoices, setShowChoices] = useState(true);
   const [questions, setQuestions] = useState([]);
   const [isCreated, setIsCreated] = useState(false);
+  const [actionName, setActionName] = useState('');
   useChangeInputType(inputValue, setNodes);
   useUpdateQuestion(questions, setNodes);
+
   useEffect(() => {
     setNodes((nds) =>
       nds.map((node) => {
@@ -108,7 +110,7 @@ function Builder() {
     () => ({ custom: CustomeNode, welcome: WelcomeNode }),
     []
   );
-  useEffect(() => {}, [id]);
+  useEffect(() => { }, [id]);
   const edgeTypes = useMemo(() => ({ pointEdge: PointedEdge }), []);
   const rootNode = () => {
     localStorage.setItem("id", 0);
@@ -118,7 +120,7 @@ function Builder() {
         type: "custom",
         position: { x: 450, y: 30 },
         data: {
-          label: "Welcome Node",
+          actionName: "Welcome Node",
           createNode: createNode,
           question: [],
           options: [],
@@ -132,32 +134,43 @@ function Builder() {
   useEffect(() => {
     console.log(nodes);
   }, [nodes]);
+
+  useEffect(() => {
+    const clickedNode = nodes.find(node => node.id === id);
+    if (clickedNode) {
+      setActionName(clickedNode.data.actionName);
+      console.log(actionName)
+    } else {
+      setActionName('');
+    }
+  }, [id, nodes]);
+
   const deleteNode = (nodeId) => {
     setNodes((nodes) => nodes.filter((element) => element.id !== nodeId));
     setEdges((edges) => edges.filter((element) => element.target !== nodeId));
     setEdges((edges) => edges.filter((element) => element.source !== nodeId));
   };
+
   const createNode = ({ nodeId, actionName }) => {
     setIsVisible(count);
-    console.log(nodeId);
-
-    // if (count > ) {
-    setEdge({
-      id: "" + count,
-      source: nodeId,
-      target: Number(count) + 1 + "",
-      type: "pointEdge",
-      style: { stroke: "black", strokeWidth: 2 },
+    setNodes((nodes) => {
+      setEdge({
+        id: "" + count,
+        source: nodeId,
+        target: Number(nodes[nodes.length - 1].id) + 1 + "",
+        type: "pointEdge",
+        style: { stroke: "black", strokeWidth: 2 },
+      });
+      return nodes;
     });
+    // if (count > ) {
     // }
-
     console.table({
       id: "" + count,
       source: nodeId + "",
-      target: Number(count) + 1 + "",
+      target: +"",
     });
-
-    let size = localStorage.getItem("id") === "0" ? 150 : 300;
+    let size = localStorage.getItem("id") === "0" ? 300 : 300;
     console.table(edges);
     setNodes((nodes) => [
       ...nodes,
@@ -181,15 +194,11 @@ function Builder() {
       },
     ]);
     localStorage.setItem("id", ++count);
-
     document.getElementById("question").value = "";
     document.getElementById("label").value = "";
     console.log(edges);
   };
-  //   const onNodesChange = useCallback(
-  //     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
-  //     [setNodes]
-  //   );
+
   const onEdgesChange = useCallback(
     (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
     [setEdges]
@@ -321,11 +330,17 @@ function Builder() {
       {LeftBarShow ? (
         <div className="LeftBar">
           <div className="LeftbarHeader">
-            <h2 style={{ color: "white" }}>Help</h2>
-            <CloseOutlinedIcon
-              onClick={() => closeLeftbar()}
-              style={{ fontSize: "30px", color: "white", marginLeft: "75%" }}
-            />
+            <div className="LeftBarHeading">
+              {actionName ? <h2 style={{ color: "white" }}>{actionName}</h2> :
+                <h2 style={{ color: "white" }}>NoData</h2>}
+            </div>
+            <div className="closeIcon">
+              <CloseOutlinedIcon
+                onClick={() => closeLeftbar()}
+                style={{ fontSize: "30px", color: "white", marginLeft: "75%" }}
+              />
+            </div>
+
           </div>
           <div className="BuilderBody">
             <Box sx={{ borderBottom: 2, borderColor: "divider" }}>
@@ -353,28 +368,29 @@ function Builder() {
               <h3>Message *</h3>
               <form onSubmit={handleSubmit(onSubmit)}>
                 {fields.map((field, index) => (
-                  <div key={field.id}>
-                    <TextField
-                      style={{ width: "87%" }}
-                      {...register(`inputFields.${index}.value`)}
-                      defaultValue={field.value}
-                      id="question"
-                      label="Message"
-                      variant="outlined"
-                      onChange={(e) => {
-                        setQuestion(e.target.value);
-                      }}
-                    />
-
-                    <button
-                      className="RemoveButton"
-                      type="button"
-                      onClick={() => remove(index)}
-                    >
-                      <DeleteIcon
-                        style={{ color: "white", fontSize: "30px" }}
+                  <div key={field.id} className="MessageField">
+                    <div style={{ width: "90%" }}>
+                      <TextField style={{ width: "95%" }}
+                        {...register(`inputFields.${index}.value`)}
+                        defaultValue={field.value}
+                        id="question"
+                        label="Message"
+                        variant="outlined"
+                        onChange={(e) => {
+                          setQuestion(e.target.value);
+                        }}
                       />
-                    </button>
+                    </div>
+                    <div style={{ width: "10%" }}>
+                      <button
+                        className="RemoveButton"
+                        type="button"
+                        onClick={() => remove(index)}
+                      >
+                        <DeleteIcon
+                          style={{ color: "white", fontSize: "30px" }}
+                        />
+                      </button></div>
                   </div>
                 ))}
                 <button

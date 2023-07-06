@@ -8,6 +8,7 @@ const CustomeNode = ({ data, id }) => {
   const dispatch = useDispatch();
 
   const clickHander = (e) => {
+
     dispatch(setId(id));
     // onNodeClik(id);
     localStorage.setItem("id", id);
@@ -31,9 +32,13 @@ const CustomeNode = ({ data, id }) => {
           ) : (
             <label>No data</label>
           )}
-          <CloseOutlinedIcon
+          <CloseOutlinedIcon 
             id="closeIcon"
-            onClick={() => data.deleteNode(id)}
+            onClick={() => {
+              if(id==='0'){
+                alert("Root can not be deleted")
+              }else{
+              data.deleteNode(id)}}}
             style={{ float: "right" }}
           />
         </header>

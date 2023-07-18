@@ -26,7 +26,7 @@ function ChatbotSetting() {
     const [channelShow, setChannelShow] = useState(true);
     const [builderShow, setBuilderShow] = useState(false);
     const [AccessShow, setAccessShow] = useState(false);
-    const [configureShow, setConfigureShow] = useState(false);
+    const [configureShow, setConfigureShow] = useState(true);
     const [shiftLeft, setShiftLeft] = useState(false);
     const [isDialog, setDialog] = useState(true);
     const [visible, setVisible] = useState(false);

@@ -32,40 +32,23 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import { useForm, useFieldArray } from "react-hook-form";
 import DeleteIcon from "@mui/icons-material/Delete";
+import axios from 'axios';
+import Chip from '@mui/material/Chip';
+import styled from 'styled-components';
 
 const options = [
-  "Talk to sales",
-  "Staff augmentation",
-  "Project Estimate",
-  "Job openings",
-  "About Us",
-  "Contact to hr",
+  // "Talk to sales",
+  // "Staff augmentation",
+  // "Project Estimate",
+  // "Job openings",
+  // "About Us",
+  // "Contact to hr",
 ];
 
-// const initialEdges = [{ id: "e1-2", source: "1", target: "2" }];
 let count = 0;
 function Builder() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges] = useState([
-    // {
-    //   id: "0",
-    //   source: "0",
-    //   target: "1",
-    //   label: "first edge",
-    //   type: "pointEdge",
-    //   data: {
-    //     label: "first age",
-    //   },
-    //   style: { stroke: "black", strokeWidth: 2 },
-    // },
-    // {
-    //   id: "1",
-    //   source: "1",
-    //   target: "2",
-    //   type: "pointEdge",
-    //   style: { stroke: "black", strokeWidth: 2 },
-    // },
-  ]);
+  const [edges, setEdges] = useState([]);
   const [label, setLabel] = useState();
   const [text, setText] = useState("");
   const [inputType, setInputType] = useState("");
@@ -87,6 +70,70 @@ function Builder() {
   const [questions, setQuestions] = useState([]);
   const [isCreated, setIsCreated] = useState(false);
   const [actionName, setActionName] = useState('');
+  const [InputTypeName, setInputTypeName] = useState('option');
+  const [AllOptions, setAllOptions] = useState([]);
+  const [AllQuestions, setAllQuestions] = useState([]);
+  const [selectedOptions, setSelectedOptions] = useState(new Set());
+  
+
+  const StyledChip = styled(Chip)`
+  margin: 5px;
+  cursor: pointer;
+  &:hover {
+    background-image: linear-gradient(195deg, #1ce4b8 0%, darkcyan 100%);
+    color: white;
+  }
+`;
+
+  const handleOptionClick = (option) => {
+  setChoice(option)
+    // const updatedSelectedOptions = new Set(selectedOptions);
+    // setSelectedOptions((prevOptions) => {
+    //   const updatedSelectedOptions = new Set(prevOptions);
+
+    //   if (updatedSelectedOptions.has(option)) {
+    //     updatedSelectedOptions.delete(option);
+    //   } else {
+    // setChoice(option)
+    //   axios
+    //   .post(`${process.env.REACT_APP_URL}api/v1/insertOption`, choice)
+    //   .then(res =>{
+    //    console.log("Response"+res);
+    //  })
+    //   .catch((error) => {
+    //    console.error("Error", error);
+    //  });
+    //     updatedSelectedOptions.add(option);
+    //   }
+
+    //   return updatedSelectedOptions;
+    // });
+
+
+    // setNodes((prevNodes) =>
+    //   prevNodes.map((node) => {
+    //     if (node.id === localStorage.getItem("id")) {
+    //       node.data = {
+    //         ...node.data,
+    //         options: Array.from(updatedSelectedOptions),
+    //       };
+    //     }
+    //     return node;
+    //   })
+    // );
+  };
+
+  const handleDelete = (chipToDelete) => {
+    debugger
+    setSelectedOptions((prevOptions) => {
+      const updatedOptions = new Set(prevOptions);
+      updatedOptions.delete(chipToDelete);
+      return updatedOptions;
+    });
+  };
+
+
+
   useChangeInputType(inputValue, setNodes);
   useUpdateQuestion(questions, setNodes);
 
@@ -120,8 +167,8 @@ function Builder() {
         type: "custom",
         position: { x: 450, y: 30 },
         data: {
-          actionName: "Welcome Node",
           createNode: createNode,
+          actionName: "Welcome Node",
           question: [],
           options: [],
           isVisible: true,
@@ -133,15 +180,36 @@ function Builder() {
 
   useEffect(() => {
     console.log(nodes);
-  }, [nodes]);
+    axios
+      .post(`${process.env.REACT_APP_URL}api/v1/node`, nodes[nodes.length - 1])
+      .then(res => {
+        console.log("Response" + res);
+      })
+      .catch((error) => {
+        console.error("Error", error);
+      });
+  }, [nodes.length]);
 
   useEffect(() => {
     const clickedNode = nodes.find(node => node.id === id);
     if (clickedNode) {
+
       setActionName(clickedNode.data.actionName);
+      setInputTypeName(clickedNode.data.inputType);
+      setAllOptions(clickedNode.data.options);
+
       console.log(actionName)
+      console.log(InputTypeName)
+      console.log(AllOptions)
+      console.log(AllQuestions)
+
     } else {
       setActionName('');
+    }
+    if (clickedNode) {
+      setAllQuestions(clickedNode.data.question);
+    } else {
+      setAllQuestions([])
     }
   }, [id, nodes]);
 
@@ -150,6 +218,8 @@ function Builder() {
     setEdges((edges) => edges.filter((element) => element.target !== nodeId));
     setEdges((edges) => edges.filter((element) => element.source !== nodeId));
   };
+
+
 
   const createNode = ({ nodeId, actionName }) => {
     setIsVisible(count);
@@ -163,8 +233,7 @@ function Builder() {
       });
       return nodes;
     });
-    // if (count > ) {
-    // }
+
     console.table({
       id: "" + count,
       source: nodeId + "",
@@ -182,8 +251,8 @@ function Builder() {
           y: nodes[nodes.length - 1].position.y + size,
         },
         data: {
-          actionName: actionName,
           createNode: createNode,
+          actionName: actionName,
           options: [],
           question: [],
           inputType: inputType,
@@ -194,7 +263,10 @@ function Builder() {
       },
     ]);
     localStorage.setItem("id", ++count);
-    document.getElementById("question").value = "";
+    const questionElement = document.getElementById("question");
+    if (questionElement) {
+      questionElement.value = "";
+    }
     document.getElementById("label").value = "";
     console.log(edges);
   };
@@ -221,7 +293,6 @@ function Builder() {
       setShowChoices(true);
     }
   };
-  // console.log(edges);
 
   const settings = () => {
     setBranchesShow(false);
@@ -240,18 +311,58 @@ function Builder() {
     setValue(newValue);
   };
 
-  const { register, control, handleSubmit } = useForm({
-    defaultValues: { inputFields: [{ value: "" }] },
+  console.log("AllQuestions:", AllQuestions);
+
+
+  const { register, control, handleSubmit, reset } = useForm({
+    defaultValues: {
+      inputFields:
+        Array.isArray(AllQuestions)
+          ? AllQuestions.map((question) => ({ value: question }))
+          : [],
+    },
   });
   const { fields, append, remove } = useFieldArray({
     control,
     name: "inputFields",
   });
 
+  const Remove = (index) => {
+    debugger
+    remove(index)
+    // axios
+    // .delete(`${process.env.REACT_APP_URL}api/v1/removeQuestion`)
+    // .then(res => {console.log(res)})
+    // .catch(err => {console.log(err)})
+  }
+
   const onSubmit = (data) => {
     console.log("Input Values:", data.inputFields);
     setQuestions(data.inputFields);
+    const payload = data.inputFields.reduce((result, q, index) => {
+      var question = q.value;
+      console.log(question)
+      var id = localStorage.getItem("id")
+      result[index] = { id: id, question: question };
+      return result;
+    }, {});
+    console.log("payload" + JSON.stringify(payload))
+    axios
+      .post(`${process.env.REACT_APP_URL}api/v1/insertQuestion`, payload[0])
+      .then(res => {
+        console.log(res)
+      })
+      .catch(err => {
+        console.log(err)
+      })
+    reset();
   };
+
+  useEffect(() => {
+    reset({
+      inputFields: AllQuestions.map((question) => question)
+    });
+  }, [AllQuestions, reset]);
 
   useEffect(() => {
     if (!isInitial) {
@@ -300,6 +411,8 @@ function Builder() {
     },
     [nodes, edges]
   );
+
+
   return (
     <div className="BuilderDiv">
       <div style={{ height: "100%", width: "100%" }} className="FlowScreen">
@@ -361,6 +474,7 @@ function Builder() {
                 id="label"
                 label="Action Name"
                 variant="outlined"
+                value={actionName || ''}
                 onChange={(e) => setLabel(e.target.value)}
               />
             </div>
@@ -370,22 +484,23 @@ function Builder() {
                 {fields.map((field, index) => (
                   <div key={field.id} className="MessageField">
                     <div style={{ width: "90%" }}>
-                      <TextField style={{ width: "95%" }}
+                      <TextField style={{ width: "95%", marginBottom: "10px" }}
                         {...register(`inputFields.${index}.value`)}
-                        defaultValue={field.value}
                         id="question"
                         label="Message"
                         variant="outlined"
                         onChange={(e) => {
                           setQuestion(e.target.value);
                         }}
+                        defaultValue={field.value}
                       />
                     </div>
+
                     <div style={{ width: "10%" }}>
                       <button
                         className="RemoveButton"
                         type="button"
-                        onClick={() => remove(index)}
+                        onClick={() => Remove(index)}
                       >
                         <DeleteIcon
                           style={{ color: "white", fontSize: "30px" }}
@@ -417,7 +532,7 @@ function Builder() {
                     <td>
                       <input
                         type="radio"
-                        defaultChecked={true}
+                        checked={InputTypeName === "option"}
                         value={"option"}
                         id="option"
                         onClick={(e) => handler(e)}
@@ -432,6 +547,7 @@ function Builder() {
                       <input
                         type="radio"
                         value={"text"}
+                        checked={InputTypeName === "text"}
                         id="text"
                         onClick={(e) => handler(e)}
                       />
@@ -440,7 +556,7 @@ function Builder() {
                 </tbody>
               </table>
             </div>
-            {showChoices ? (
+            {showChoices === "true" || InputTypeName === "option" ? (
               <div>
                 <h3 style={{ margin: "10px" }}>Your visitors' responses</h3>
                 <h4 style={{ margin: "10px", marginTop: "15px" }}>
@@ -451,13 +567,24 @@ function Builder() {
                   <div className="default">
                     {options.map((op, i) => {
                       return (
-                        <button
-                          className="opBtn"
+                        //   <button
+                        //   className={`opBtn ${selectedOptions.has(op) ? 'active' : ''}`}
+                        //   key={i}
+                        //   onClick={() => handleOptionClick(op)}
+                        // >
+                        //     {op}
+                        //   </button>
+                        <StyledChip
+                         spacing={1}
+                          className={`opBtn ${selectedOptions.has(op) ? 'active' : ''}`}
+                          style={{ display: 'inline-block', width: 'fit-content' }}
                           key={i}
-                          onClick={() => setChoice(options[i])}
-                        >
-                          {op}
-                        </button>
+                          label={op}
+                          onClick={() => handleOptionClick(op)}
+                          onDelete={() => handleDelete(op)}
+                          variant="outlined"
+                        />
+
                       );
                     })}
                   </div>
@@ -468,13 +595,17 @@ function Builder() {
                       label="Add your response here.."
                       variant="outlined"
                       onChange={(e) => {
-                        setText(e.target.value);
+                        setText(e.target.value.replace(/[,;]/g, "").trim());
                       }}
                       onKeyUp={(e) => {
-                        if (e.key === "Enter") {
+                        if (e.key === "Enter" || e.key ==="," || e.key===";") {
+                          e.preventDefault();
+                          if (text.trim().length > 0) {
                           options.push(text);
                           setChoice(text);
                           document.getElementById("textInput").value = "";
+                          }
+                          setText("");
                         }
                       }}
                     />
